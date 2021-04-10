@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 
 namespace DatabaseProject
 {
@@ -10,6 +11,8 @@ namespace DatabaseProject
         private int _typeADeadlockCount;
         private int _typeBDeadlockCount;
         private int _otherExceptionsCount;
+        private TimeSpan _typeATotalTime;
+        private TimeSpan _typeBTotalTime;
 
         private string _connectionString =
             @"Data Source=localhost;Initial Catalog=AdventureWorks2012;User ID=sa;Password=Onur-1234";
@@ -17,6 +20,11 @@ namespace DatabaseProject
         public Operations(IsolationLevel isolationLevel)
         {
             _isolationLevel = isolationLevel;
+            _typeADeadlockCount = 0;
+            _typeBDeadlockCount = 0;
+            _otherExceptionsCount = 0;
+            _typeATotalTime = TimeSpan.Zero;
+            _typeBTotalTime = TimeSpan.Zero;
         }
 
         private SqlCommand UpdateQuery(string beginDate, string endDate, SqlConnection connection,
@@ -63,18 +71,18 @@ namespace DatabaseProject
 
         public void ThreadTypeA()
         {
+            SqlConnection conn = new SqlConnection(_connectionString);
+            SqlTransaction transaction = null;
             DateTime beginTime = DateTime.Now;
-
             for (int i = 0; i < 100; i++)
             {
-                using SqlConnection conn = new SqlConnection(_connectionString);
-                conn.Open();
-                SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
-
-                Random random = new Random();
-                double randomNumber = random.NextDouble();
                 try
                 {
+                    conn.Open();
+                    transaction = conn.BeginTransaction(_isolationLevel);
+
+                    Random random = new Random();
+                    double randomNumber = random.NextDouble();
                     if (randomNumber < 0.5)
                         UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (randomNumber < 0.5)
@@ -122,22 +130,25 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
+            _typeATotalTime += elapsed;
         }
 
         public void ThreadTypeB()
         {
+            SqlConnection conn = new SqlConnection(_connectionString);
+            SqlTransaction transaction = null;
             DateTime beginTime = DateTime.Now;
-            
-            for (int i = 0; i < 20; i++)
-            {
-                using SqlConnection conn = new SqlConnection(_connectionString);
-                conn.Open();
-                SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
 
-                Random random = new Random();
-                double randomNumber = random.NextDouble();
+            for (int i = 0; i < 5; i++)
+            {
                 try
                 {
+                    conn.Open();
+                    transaction = conn.BeginTransaction(_isolationLevel);
+
+                    Random random = new Random();
+                    double randomNumber = random.NextDouble();
+                    
                     if (randomNumber < 0.5)
                         SelectQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (randomNumber < 0.5)
@@ -185,6 +196,21 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
+            _typeBTotalTime += elapsed;
+        }
+
+        public void WriteThreadReportsToFile(string fileName)
+        {
+            string[] lines =
+            {
+                "TypeA Deadlock Count : " + _typeADeadlockCount,
+                "TypeB Deadlock Count : " + _typeBDeadlockCount,
+                "TypeA Total Time Cost : " + _typeATotalTime,
+                "TypeB Total Time Cost : " + _typeBTotalTime,
+                "Other Exception Count : "  + _otherExceptionsCount
+                
+            };
+            File.WriteAllLines(fileName, lines);
         }
     }
 }
