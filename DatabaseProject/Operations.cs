@@ -4,15 +4,16 @@ using System.Data.SqlClient;
 
 namespace DatabaseProject
 {
-    public class Operations 
+    public class Operations
     {
         private readonly IsolationLevel _isolationLevel;
         private string _connectionString =
-            @"Data Source=localhost;Initial Catalog=AdventureWorks2012;User ID=sa;Password=Onur-1234";
-
+            @"Data Source=(LocalDB)\MSSQLLocalDB;Initial Catalog=AdventureWorks2012;Integrated Security=True;";
+        private int deadlockCount;
         public Operations(IsolationLevel isolationLevel)
         {
             _isolationLevel = isolationLevel;
+            deadlockCount = 0;
         }
 
         private SqlCommand UpdateQuery(string beginDate, string endDate, SqlConnection connection,
@@ -57,39 +58,50 @@ namespace DatabaseProject
             return command;
         }
 
-        public Report ThreadTypeA()
+        public Report ThreadTypeA(int threadNumber)
         {
+            Console.WriteLine("program baþladý!!");
             DateTime beginTime = DateTime.Now;
-            int deadlockCount = 0;
+            
 
             for (int i = 0; i < 100; i++)
             {
-                try
-                {
-                    SqlConnection conn = new SqlConnection(_connectionString);
+                Console.WriteLine("Döngü {0} , Thread {1}, Type A",i,threadNumber);
+                using (SqlConnection conn = new SqlConnection(_connectionString)) {
                     conn.Open();
                     SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
-
                     Random random = new Random();
                     double randomNumber = random.NextDouble();
+                    
+                    try
+                    {
+                        if (randomNumber < 0.5)
+                            UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
+                        if (randomNumber < 0.5)
+                            UpdateQuery("20120101", "20121231", conn, transaction).ExecuteNonQuery();
+                        if (randomNumber < 0.5)
+                            UpdateQuery("20130101", "20131231", conn, transaction).ExecuteNonQuery();
+                        if (randomNumber < 0.5)
+                            UpdateQuery("20140101", "20141231", conn, transaction).ExecuteNonQuery();
+                        if (randomNumber < 0.5)
+                            UpdateQuery("20150101", "20151231", conn, transaction).ExecuteNonQuery();
 
-                    if (randomNumber < 0.5)
-                        UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
-                        UpdateQuery("20120101", "20121231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
-                        UpdateQuery("20130101", "20131231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
-                        UpdateQuery("20140101", "20141231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
-                        UpdateQuery("20150101", "20151231", conn, transaction).ExecuteNonQuery();
-
-                    transaction.Commit();
-                    conn.Close();
-                }
-                catch (Exception)
-                {
-                    deadlockCount++;
+                        transaction.Commit();
+                        conn.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        ++deadlockCount;
+                        try {
+                                Console.WriteLine("Thread{1}, Deadlock has been catched in Type A, Total Deadlock is {0}",deadlockCount,threadNumber);
+                                transaction.Rollback();
+                            }
+                            catch (Exception ex2)
+                            {
+                                Console.WriteLine("TypeA ,Rollback Exception Type: {0}", ex2.GetType());
+                                Console.WriteLine("  Message: {0}", ex2.Message);
+                            }
+                    }
                 }
             }
 
@@ -99,22 +111,21 @@ namespace DatabaseProject
             return report;
         }
         
-        public Report ThreadTypeB()
+        public Report ThreadTypeB(int threadNumber)
         {
             DateTime beginTime = DateTime.Now;
-            int deadlockCount = 0;
 
             for (int i = 0; i < 100; i++)
             {
-                try
-                {
-                    SqlConnection conn = new SqlConnection(_connectionString);
+                Console.WriteLine("Döngü {0} , Thread {1}, Type B", i, threadNumber);
+                using (SqlConnection conn = new SqlConnection(_connectionString)) { 
                     conn.Open();
                     SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
 
                     Random random = new Random();
                     double randomNumber = random.NextDouble();
-
+                try
+                {
                     if (randomNumber < 0.5)
                         SelectQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (randomNumber < 0.5)
@@ -129,9 +140,20 @@ namespace DatabaseProject
                     transaction.Commit();
                     conn.Close();
                 }
-                catch (Exception)
-                {
-                    deadlockCount++;
+                    catch (Exception ex)
+                    {
+                        ++deadlockCount;
+                        try
+                        {
+                            Console.WriteLine("Thread{1}, Deadlock has been catched in Type B, Total Deadlock is {0}", deadlockCount, threadNumber);
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.WriteLine("TypeB ,Rollback Exception Type: {0}", ex2.GetType());
+                            Console.WriteLine("  Message: {0}", ex2.Message);
+                        }
+                    }
                 }
             }
 
