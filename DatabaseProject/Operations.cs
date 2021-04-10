@@ -7,6 +7,10 @@ namespace DatabaseProject
     public class Operations 
     {
         private readonly IsolationLevel _isolationLevel;
+        private int _typeADeadlockCount;
+        private int _typeBDeadlockCount;
+        private int _otherExceptionsCount;
+
         private string _connectionString =
             @"Data Source=localhost;Initial Catalog=AdventureWorks2012;User ID=sa;Password=Onur-1234";
 
@@ -57,22 +61,20 @@ namespace DatabaseProject
             return command;
         }
 
-        public Report ThreadTypeA()
+        public void ThreadTypeA()
         {
             DateTime beginTime = DateTime.Now;
-            int deadlockCount = 0;
 
             for (int i = 0; i < 100; i++)
             {
+                using SqlConnection conn = new SqlConnection(_connectionString);
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
+
+                Random random = new Random();
+                double randomNumber = random.NextDouble();
                 try
                 {
-                    SqlConnection conn = new SqlConnection(_connectionString);
-                    conn.Open();
-                    SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
-
-                    Random random = new Random();
-                    double randomNumber = random.NextDouble();
-
                     if (randomNumber < 0.5)
                         UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (randomNumber < 0.5)
@@ -87,34 +89,55 @@ namespace DatabaseProject
                     transaction.Commit();
                     conn.Close();
                 }
-                catch (Exception)
+                catch (SqlException ex1)
                 {
-                    deadlockCount++;
+                    if (ex1.Number == 1205)
+                    {
+                        try
+                        {
+                            _typeADeadlockCount++;
+                            Console.WriteLine("Deadlock has been catched in ThreadTypeA, Total Deadlock is {0}", _typeADeadlockCount);
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.WriteLine("ThreadTypeA ,Rollback Exception Type: {0}", ex2.GetType());
+                            Console.WriteLine("Message: {0}", ex2.Message);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    _otherExceptionsCount++;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
                 }
             }
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            Report report = new Report(elapsed, deadlockCount);
-            return report;
         }
-        
-        public Report ThreadTypeB()
+
+        public void ThreadTypeB()
         {
             DateTime beginTime = DateTime.Now;
-            int deadlockCount = 0;
-
-            for (int i = 0; i < 100; i++)
+            
+            for (int i = 0; i < 20; i++)
             {
+                using SqlConnection conn = new SqlConnection(_connectionString);
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
+
+                Random random = new Random();
+                double randomNumber = random.NextDouble();
                 try
                 {
-                    SqlConnection conn = new SqlConnection(_connectionString);
-                    conn.Open();
-                    SqlTransaction transaction = conn.BeginTransaction(_isolationLevel);
-
-                    Random random = new Random();
-                    double randomNumber = random.NextDouble();
-
                     if (randomNumber < 0.5)
                         SelectQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (randomNumber < 0.5)
@@ -129,16 +152,39 @@ namespace DatabaseProject
                     transaction.Commit();
                     conn.Close();
                 }
-                catch (Exception)
+                catch (SqlException ex1)
                 {
-                    deadlockCount++;
+                    if (ex1.Number == 1205)
+                    {
+                        try
+                        {
+                            _typeBDeadlockCount++;
+                            Console.WriteLine("Deadlock has been catched in ThreadTypeB, Total Deadlock is {0}", _typeBDeadlockCount);
+                            transaction.Rollback();
+                        }
+                        catch (Exception ex2)
+                        {
+                            Console.WriteLine("ThreadTypeB ,Rollback Exception Type: {0}", ex2.GetType());
+                            Console.WriteLine("Message: {0}", ex2.Message);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    _otherExceptionsCount++;
+                }
+                finally
+                {
+                    if (conn.State == ConnectionState.Open)
+                    {
+                        conn.Close();
+                    }
                 }
             }
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            Report report = new Report(elapsed, deadlockCount);
-            return report;
         }
     }
 }
