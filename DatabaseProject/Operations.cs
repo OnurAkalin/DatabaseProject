@@ -83,15 +83,15 @@ namespace DatabaseProject
 
                     Random random = new Random();
                     double randomNumber = random.NextDouble();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         UpdateQuery("20120101", "20121231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         UpdateQuery("20130101", "20131231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         UpdateQuery("20140101", "20141231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         UpdateQuery("20150101", "20151231", conn, transaction).ExecuteNonQuery();
 
                     transaction.Commit();
@@ -111,6 +111,7 @@ namespace DatabaseProject
                         {
                             Console.WriteLine("ThreadTypeA ,Rollback Exception Type: {0}", ex2.GetType());
                             Console.WriteLine("Message: {0}", ex2.Message);
+                            _otherExceptionsCount++;
                         }
                     }
                 }
@@ -139,7 +140,7 @@ namespace DatabaseProject
             SqlTransaction transaction = null;
             DateTime beginTime = DateTime.Now;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 100; i++)
             {
                 try
                 {
