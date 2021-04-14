@@ -13,13 +13,13 @@ namespace DatabaseProject
             Operations operations = new Operations(IsolationLevel.ReadUncommitted);
 
             int typeAUserCount = 5;
-            int typeBUserCount = 8;
+            int typeBUserCount = 1;
 
             ThreadManager threadManager = new ThreadManager(operations);
             var userAList = threadManager.CreateTypeAThreads(typeAUserCount);
             var userBList = threadManager.CreateTypeBThreads(typeBUserCount);
             threadManager.StartAndJoinThreads(userAList, userBList);
-            operations.WriteThreadReportsToFile("ReadUncommitted10.txt");
+            operations.WriteThreadReportsToFile("ReadUncommitted10.txt", typeAUserCount, typeBUserCount);
             
         }
     }
