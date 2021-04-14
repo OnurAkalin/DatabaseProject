@@ -84,7 +84,7 @@ namespace DatabaseProject
                     transaction = conn.BeginTransaction(_isolationLevel);
 
                     Random random = new Random();
-                    double randomNumber = random.NextDouble();
+                    
                     if (random.NextDouble() < 0.5)
                         UpdateQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
                     if (random.NextDouble() < 0.5)
@@ -116,7 +116,6 @@ namespace DatabaseProject
                         catch (Exception ex2)
                         {
                             Console.WriteLine("ThreadTypeA ,Rollback Exception Type: {0}", ex2.GetType());
-                            Console.WriteLine("Message: {0}", ex2.Message);
                             lock (_threadLock)
                             {
                                 _otherExceptionsCount++;
@@ -143,7 +142,7 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            Console.WriteLine(" A - > Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
+            //Console.WriteLine(" A - > Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
             lock (_threadLock)
             {
                 _typeATotalTime += elapsed;
@@ -164,17 +163,16 @@ namespace DatabaseProject
                     transaction = conn.BeginTransaction(_isolationLevel);
 
                     Random random = new Random();
-                    double randomNumber = random.NextDouble();
-
-                    if (randomNumber < 0.5)
+                    
+                    if (random.NextDouble() < 0.5)
                         SelectQuery("20110101", "20111231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         SelectQuery("20120101", "20121231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         SelectQuery("20130101", "20131231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         SelectQuery("20140101", "20141231", conn, transaction).ExecuteNonQuery();
-                    if (randomNumber < 0.5)
+                    if (random.NextDouble() < 0.5)
                         SelectQuery("20150101", "20151231", conn, transaction).ExecuteNonQuery();
 
                     transaction.Commit();
@@ -224,7 +222,7 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            Console.WriteLine("B -> Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
+            //Console.WriteLine("B -> Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
             lock (_threadLock)
             {
                 _typeBTotalTime += elapsed;
@@ -235,13 +233,16 @@ namespace DatabaseProject
         {
             string[] lines =
             {
+                "***************************************************************",
+                "TypeA User Count : " + typeAUserCount + " TypeB User Count : " + typeBUserCount,
                 "TypeA Deadlock Count : " + _typeADeadlockCount,
                 "TypeB Deadlock Count : " + _typeBDeadlockCount,
                 "TypeA Total Time Cost : " + (_typeATotalTime / typeAUserCount),
                 "TypeB Total Time Cost : " + (_typeBTotalTime / typeBUserCount),
-                "Other Exception Count : " + _otherExceptionsCount
+                "Other Exception Count : " + _otherExceptionsCount,
+                "***************************************************************\n"
             };
-            File.WriteAllLines(fileName, lines);
+            File.AppendAllLines(fileName, lines);
         }
     }
 }
