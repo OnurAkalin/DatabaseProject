@@ -120,6 +120,7 @@ namespace DatabaseProject
                             {
                                 _otherExceptionsCount++;
                             }
+                            transaction.Rollback();
                         }
                     }
                 }
@@ -130,6 +131,7 @@ namespace DatabaseProject
                     {
                         _otherExceptionsCount++;
                     }
+                    transaction.Rollback();
                 }
                 finally
                 {
@@ -200,6 +202,7 @@ namespace DatabaseProject
                             {
                                 _otherExceptionsCount++;
                             }
+                            transaction.Rollback();
                         }
                     }
                 }
@@ -210,6 +213,7 @@ namespace DatabaseProject
                     {
                         _otherExceptionsCount++;
                     }
+                    transaction.Rollback();
                 }
                 finally
                 {
@@ -237,8 +241,8 @@ namespace DatabaseProject
                 "TypeA User Count : " + typeAUserCount + " TypeB User Count : " + typeBUserCount,
                 "TypeA Deadlock Count : " + _typeADeadlockCount,
                 "TypeB Deadlock Count : " + _typeBDeadlockCount,
-                "TypeA Total Time Cost : " + (_typeATotalTime / typeAUserCount),
-                "TypeB Total Time Cost : " + (_typeBTotalTime / typeBUserCount),
+                "TypeA Average Time Cost : " + (_typeATotalTime / typeAUserCount),
+                "TypeB Average Time Cost : " + (_typeBTotalTime / typeBUserCount),
                 "Other Exception Count : " + _otherExceptionsCount,
                 "***************************************************************\n"
             };
