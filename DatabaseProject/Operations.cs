@@ -110,7 +110,7 @@ namespace DatabaseProject
                                 _typeADeadlockCount++;
                             }
 
-                            //Console.WriteLine("Deadlock has been catched in ThreadTypeA, Total Deadlock is {0}", _typeADeadlockCount);
+                            Console.WriteLine("Deadlock has been catched in ThreadTypeA, Total Deadlock is {0}", _typeADeadlockCount);
                             transaction.Rollback();
                         }
                         catch (Exception ex2)
@@ -144,7 +144,7 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            //Console.WriteLine(" A - > Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
+            Console.WriteLine("A - > Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
             lock (_threadLock)
             {
                 _typeATotalTime += elapsed;
@@ -191,7 +191,7 @@ namespace DatabaseProject
                                 _typeBDeadlockCount++;
                             }
 
-                            //Console.WriteLine("Deadlock has been catched in ThreadTypeB, Total Deadlock is {0}", _typeBDeadlockCount);
+                            Console.WriteLine("Deadlock has been catched in ThreadTypeB, Total Deadlock is {0}", _typeBDeadlockCount);
                             transaction.Rollback();
                         }
                         catch (Exception ex2)
@@ -226,7 +226,7 @@ namespace DatabaseProject
 
             DateTime endTime = DateTime.Now;
             TimeSpan elapsed = endTime - beginTime;
-            //Console.WriteLine("B -> Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
+            Console.WriteLine("B -> Begin time : " +  beginTime + " End time : " + endTime  + " Total: " + elapsed);
             lock (_threadLock)
             {
                 _typeBTotalTime += elapsed;
