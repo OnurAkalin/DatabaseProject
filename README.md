@@ -1,2 +1,2 @@
-# DatabaseProject
-Database Project - Isolation levels simulation
+# Database Project
+Database Project - Isolation Levels Simulation
